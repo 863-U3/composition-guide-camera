@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>構図ガイドカメラ</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+    <video id="camera" playsinline muted autoplay></video>
+
+    <div id="overlayContainer">
+      <canvas id="guideCanvas"></canvas>
+    </div>
+
+    <header id="topBar">
+      <div id="aspectControls" class="controls-row"></div>
+      <div id="opacityControl" class="controls-row">
+        <label for="opacitySlider">濃度</label>
+        <input type="range" id="opacitySlider" min="0" max="1" step="0.05" value="0.8" />
+      </div>
+    </header>
+
+    <footer id="bottomBar">
+      <div id="guideStrip"></div>
+    </footer>
+
+    <div id="errorOverlay" class="is-hidden">
+      <p>カメラにアクセスできません</p>
+      <button id="retryBtn" type="button">再試行</button>
+    </div>
+  </div>
+
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>
