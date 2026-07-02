@@ -23,7 +23,7 @@ export const diagonal = {
   variants: [
     { id: 'down', lines: [[0,0,1,1]], circles: [], spirals: [], sweetSpots: [[1/3,1/3,0.08],[2/3,2/3,0.08]] },
     { id: 'up',   lines: [[0,1,1,0]], circles: [], spirals: [], sweetSpots: [[1/3,2/3,0.08],[2/3,1/3,0.08]] },
-    { id: 'x',    lines: [[0,0,1,1],[0,1,1,0]], circles: [], spirals: [], sweetSpots: [[0.5,0.5,0.09]] },
+    { id: 'x',    lines: [[0,0,1,1],[0,1,1,0]], circles: [], spirals: [], sweetSpots: [[1/3,1/3,0.08],[2/3,2/3,0.08],[1/3,2/3,0.08],[2/3,1/3,0.08]] },
   ],
 };
 
