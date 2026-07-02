@@ -15,7 +15,7 @@ const THUMB_H = 72;
  * and the camera-error overlay. All DOM lookups happen inside this function
  * so importing this module is safe in a DOM-free (headless) environment.
  */
-export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacityChange, onBurnInChange, onShutter, onAutoRecommendChange } = {}) {
+export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacityChange, onBurnInChange, onShutter, onAutoRecommendChange, onLevelToggle } = {}) {
   const strip = document.getElementById('guideStrip');
   const aspectControls = document.getElementById('aspectControls');
   const opacitySlider = document.getElementById('opacitySlider');
@@ -26,8 +26,27 @@ export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacit
   const shutterBtn = document.getElementById('shutterBtn');
   const errorOverlay = document.getElementById('errorOverlay');
   const retryBtn = document.getElementById('retryBtn');
+  const settingsBtn = document.getElementById('settingsBtn');
+  const settingsPanel = document.getElementById('settingsPanel');
+  const guideStripToggleBtn = document.getElementById('guideStripToggleBtn');
+  const levelControl = document.getElementById('levelControl');
+  const levelToggle = document.getElementById('levelToggle');
   let toastHideTimer = null;
   let toastFadeTimer = null;
+  function showToastLocal(text) {
+    if (!toast) return;
+    if (toastHideTimer) clearTimeout(toastHideTimer);
+    if (toastFadeTimer) clearTimeout(toastFadeTimer);
+    toast.textContent = text;
+    toast.classList.remove('is-hidden');
+    toast.classList.remove('is-fading');
+    toastFadeTimer = setTimeout(() => {
+      toast.classList.add('is-fading');
+    }, 1200);
+    toastHideTimer = setTimeout(() => {
+      toast.classList.add('is-hidden');
+    }, 1500);
+  }
   const SIZE_ADVICE_TEXT = { closer: 'もっと寄って', back: '少し引いて' };
   let currentSizeAdvice = null;
 
@@ -128,6 +147,52 @@ export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacit
   }
   let retryHandler = null;
 
+  // --- ⚙設定ポップオーバー ---
+  if (settingsBtn && settingsPanel) {
+    settingsBtn.addEventListener('click', () => {
+      settingsPanel.classList.toggle('is-hidden');
+    });
+  }
+
+  // --- 構図を選ぶ（サムネ帯開閉） ---
+  if (guideStripToggleBtn && strip) {
+    guideStripToggleBtn.addEventListener('click', () => {
+      const nowHidden = strip.classList.toggle('is-hidden');
+      guideStripToggleBtn.classList.toggle('is-active', !nowHidden);
+    });
+  }
+
+  // --- 水平ガイドトグル ---
+  if (levelControl) {
+    if (typeof DeviceOrientationEvent === 'undefined') {
+      levelControl.classList.add('is-hidden');
+    } else if (levelToggle) {
+      levelControl.classList.remove('is-hidden');
+      levelToggle.addEventListener('click', async () => {
+        if (levelToggle.checked) {
+          // requestPermissionが存在する(iOS)場合はユーザー操作起点で許可要求
+          if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+            try {
+              const result = await DeviceOrientationEvent.requestPermission();
+              if (result !== 'granted') {
+                levelToggle.checked = false;
+                showToastLocal('水平ガイドを使えません');
+                return;
+              }
+            } catch (err) {
+              levelToggle.checked = false;
+              showToastLocal('水平ガイドを使えません');
+              return;
+            }
+          }
+          onLevelToggle?.(true);
+        } else {
+          onLevelToggle?.(false);
+        }
+      });
+    }
+  }
+
   return {
     guides: GUIDES,
     aspects: ASPECTS,
@@ -152,20 +217,7 @@ export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacit
       if (shutterBtn) shutterBtn.disabled = false;
       errorOverlay?.classList.add('is-hidden');
     },
-    showToast(text) {
-      if (!toast) return;
-      if (toastHideTimer) clearTimeout(toastHideTimer);
-      if (toastFadeTimer) clearTimeout(toastFadeTimer);
-      toast.textContent = text;
-      toast.classList.remove('is-hidden');
-      toast.classList.remove('is-fading');
-      toastFadeTimer = setTimeout(() => {
-        toast.classList.add('is-fading');
-      }, 1200);
-      toastHideTimer = setTimeout(() => {
-        toast.classList.add('is-hidden');
-      }, 1500);
-    },
+    showToast: showToastLocal,
     setSizeAdvice(kind) {
       if (!sizeAdvice || kind === currentSizeAdvice) return;
       currentSizeAdvice = kind;

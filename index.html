@@ -21,6 +21,14 @@
     </div>
 
     <header id="topBar">
+      <div id="autoRecommendControl" class="controls-row">
+        <input type="checkbox" id="autoRecommendToggle" checked />
+        <label for="autoRecommendToggle">おまかせ構図</label>
+      </div>
+      <button id="settingsBtn" type="button" aria-label="設定">⚙</button>
+    </header>
+
+    <div id="settingsPanel" class="is-hidden">
       <div id="aspectControls" class="controls-row"></div>
       <div id="opacityControl" class="controls-row">
         <label for="opacitySlider">濃度</label>
@@ -30,25 +38,29 @@
         <input type="checkbox" id="burnInToggle" />
         <label for="burnInToggle">ガイド焼き込み</label>
       </div>
-      <div id="autoRecommendControl" class="controls-row">
-        <input type="checkbox" id="autoRecommendToggle" checked />
-        <label for="autoRecommendToggle">おまかせ構図</label>
+      <div id="levelControl" class="controls-row is-hidden">
+        <input type="checkbox" id="levelToggle" />
+        <label for="levelToggle">水平ガイド</label>
       </div>
-    </header>
+    </div>
 
     <div id="toast" class="is-hidden" role="status" aria-live="polite"></div>
 
     <footer id="bottomBar">
       <div id="sizeAdvice" class="is-hidden"></div>
-      <div id="shutterContainer">
-        <button id="shutterBtn" type="button" aria-label="撮影">
-          <svg viewBox="0 0 48 48" width="48" height="48">
-            <circle cx="24" cy="24" r="20" fill="currentColor" />
-            <circle cx="24" cy="24" r="16" fill="#000" />
-          </svg>
-        </button>
+      <div id="shutterRow">
+        <button id="guideStripToggleBtn" type="button" class="pill-btn">構図を選ぶ</button>
+        <div id="shutterContainer">
+          <button id="shutterBtn" type="button" aria-label="撮影">
+            <svg viewBox="0 0 48 48" width="48" height="48">
+              <circle cx="24" cy="24" r="20" fill="currentColor" />
+              <circle cx="24" cy="24" r="16" fill="#000" />
+            </svg>
+          </button>
+        </div>
+        <div class="pill-btn-spacer"></div>
       </div>
-      <div id="guideStrip"></div>
+      <div id="guideStrip" class="is-hidden"></div>
     </footer>
 
     <div id="errorOverlay" class="is-hidden">

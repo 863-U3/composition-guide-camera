@@ -1,12 +1,12 @@
 import { GUIDES } from './guides/index.js';
-import { drawGuide, drawArrow } from './renderer.js';
+import { drawGuide, drawArrow, drawLevel } from './renderer.js';
 import { startCamera } from './camera.js';
 import { initUI } from './ui.js';
 import { capture, download } from './capture.js';
 import { createDetector } from './detector.js';
 import { hitTest, mapVideoToOverlay, visibleVideoRect } from './hittest.js';
 import { recommend, stableTop } from './recommender.js';
-import { guidanceVector, sizeAdvice, primarySubject } from './guidance.js';
+import { guidanceVector, sizeAdvice, primarySubject, levelState } from './guidance.js';
 
 const DETECT_INTERVAL_MS = 500;
 const RECOMMEND_SCORE_MARGIN = 0.15;
@@ -25,7 +25,28 @@ const state = {
   recommendHistory: [],
   suppressedGuideId: null,
   suppressedUntil: 0,
+  levelEnabled: false,
+  rollDeg: null,
 };
+
+let onDeviceOrientation = null;
+
+function setLevelEnabled(value) {
+  state.levelEnabled = value;
+  if (value) {
+    if (!onDeviceOrientation) {
+      onDeviceOrientation = (event) => {
+        state.rollDeg = event.gamma ?? null;
+      };
+    }
+    window.addEventListener('deviceorientation', onDeviceOrientation);
+  } else {
+    if (onDeviceOrientation) {
+      window.removeEventListener('deviceorientation', onDeviceOrientation);
+    }
+    state.rollDeg = null;
+  }
+}
 
 function applyAspect(video, overlay, aspect) {
   const containerW = window.innerWidth;
@@ -200,6 +221,7 @@ async function init() {
     onBurnInChange: setBurnIn,
     onShutter: () => onShutter(video, overlay),
     onAutoRecommendChange: (value) => setAutoRecommend(value, ui),
+    onLevelToggle: setLevelEnabled,
   });
 
   video.addEventListener('click', (e) => handleOverlayTap(overlay, e.clientX, e.clientY));
@@ -271,6 +293,11 @@ async function init() {
       });
     }
 
+    if (state.levelEnabled && state.rollDeg != null) {
+      const { level } = levelState(state.rollDeg);
+      drawLevel(ctx, state.rollDeg, cssW, cssH, { level });
+    }
+
     const subj = primarySubject(state.detectedSubjects, state.manualSubject);
     if (subj) {
       const gv = guidanceVector(subj, state.variant);
@@ -298,4 +325,4 @@ if (typeof document !== 'undefined') {
   }
 }
 
-export { state, applyAspect, setGuide, cycleVariant, setAspect, setOpacity, setAutoRecommend, init };
+export { state, applyAspect, setGuide, cycleVariant, setAspect, setOpacity, setAutoRecommend, setLevelEnabled, init };

@@ -65,6 +65,62 @@ html, body {
   gap: 8px;
 }
 
+#settingsBtn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 8px;
+  font-size: 18px;
+  line-height: 1;
+  touch-action: manipulation;
+}
+
+#settingsPanel {
+  position: absolute;
+  top: calc(56px + env(safe-area-inset-top));
+  right: calc(12px + env(safe-area-inset-right));
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 11;
+  touch-action: manipulation;
+}
+
+.pill-btn {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 8px 14px;
+  min-height: 44px;
+  border-radius: 999px;
+  font-size: 13px;
+  touch-action: manipulation;
+}
+
+.pill-btn.is-active {
+  background: #fff;
+  color: #000;
+  font-weight: bold;
+}
+
+#shutterRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 16px;
+}
+
+.pill-btn-spacer {
+  width: 96px;
+}
+
 .aspect-btn {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.3);
