@@ -139,6 +139,12 @@ html, body {
   opacity: 0.8;
 }
 
+#shutterBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 #guideStrip {
   display: flex;
   gap: 8px;

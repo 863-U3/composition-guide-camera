@@ -115,9 +115,11 @@ export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacit
     aspects: ASPECTS,
     showError(onRetry) {
       retryHandler = onRetry;
+      if (shutterBtn) shutterBtn.disabled = true;
       errorOverlay?.classList.remove('is-hidden');
     },
     hideError() {
+      if (shutterBtn) shutterBtn.disabled = false;
       errorOverlay?.classList.add('is-hidden');
     },
   };

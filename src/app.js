@@ -73,12 +73,20 @@ function setBurnIn(value) {
 }
 
 async function onShutter(videoEl) {
-  const blob = await capture(videoEl, {
-    burnIn: state.burnIn,
-    variant: state.variant,
-    opacity: state.opacity,
-  });
-  download(blob);
+  try {
+    const blob = await capture(videoEl, {
+      burnIn: state.burnIn,
+      variant: state.variant,
+      opacity: state.opacity,
+    });
+    if (!blob) {
+      console.warn('撮影に失敗しました');
+      return;
+    }
+    download(blob);
+  } catch (err) {
+    console.warn('撮影に失敗しました', err);
+  }
 }
 
 async function init() {
