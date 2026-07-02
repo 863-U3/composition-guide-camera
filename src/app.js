@@ -140,8 +140,8 @@ async function init() {
     onShutter: () => onShutter(video),
   });
 
-  overlay.addEventListener('click', (e) => handleOverlayTap(overlay, e.clientX, e.clientY));
-  overlay.addEventListener('dblclick', () => clearManualSubject());
+  video.addEventListener('click', (e) => handleOverlayTap(overlay, e.clientX, e.clientY));
+  video.addEventListener('dblclick', () => clearManualSubject());
 
   async function tryStartCamera() {
     try {
