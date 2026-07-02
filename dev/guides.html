@@ -2,7 +2,7 @@
 <style>body{background:#222;color:#eee;font-family:sans-serif;display:flex;flex-wrap:wrap;gap:8px}figure{margin:0}figcaption{font-size:11px;text-align:center}</style>
 <script type="module">
 import { GUIDES } from '../src/guides/index.js';
-import { drawGuide } from '../src/renderer.js';
+import { drawGuide, drawArrow, drawLevel } from '../src/renderer.js';
 for (const g of GUIDES) for (const v of g.variants) {
   const fig = document.createElement('figure');
   const c = Object.assign(document.createElement('canvas'), { width: 300, height: 225 });
@@ -10,6 +10,28 @@ for (const g of GUIDES) for (const v of g.variants) {
   ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 300, 225);
   drawGuide(ctx, v, 300, 225, { highlight: [0] });
   fig.append(c, Object.assign(document.createElement('figcaption'), { textContent: `${g.name} / ${v.id}` }));
+  document.body.append(fig);
+}
+
+// drawArrow サンプル: 距離別 opacity 確認
+for (const dist of [0.05, 0.2, 0.5]) {
+  const fig = document.createElement('figure');
+  const c = Object.assign(document.createElement('canvas'), { width: 300, height: 225 });
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 300, 225);
+  drawArrow(ctx, { x: 0.2, y: 0.8 }, { x: 0.7, y: 0.3 }, 300, 225, { dist });
+  fig.append(c, Object.assign(document.createElement('figcaption'), { textContent: `drawArrow / dist=${dist}` }));
+  document.body.append(fig);
+}
+
+// drawLevel サンプル: 角度別（level:true時は緑）
+for (const angleDeg of [-8, -1, 0]) {
+  const fig = document.createElement('figure');
+  const c = Object.assign(document.createElement('canvas'), { width: 300, height: 225 });
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 300, 225);
+  drawLevel(ctx, angleDeg, 300, 225, { level: true });
+  fig.append(c, Object.assign(document.createElement('figcaption'), { textContent: `drawLevel / angle=${angleDeg} / level` }));
   document.body.append(fig);
 }
 </script>
