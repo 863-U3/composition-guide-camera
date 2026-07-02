@@ -3,6 +3,10 @@ import { drawGuide } from './renderer.js';
 import { startCamera } from './camera.js';
 import { initUI } from './ui.js';
 import { capture, download } from './capture.js';
+import { createDetector } from './detector.js';
+import { hitTest, mapVideoToOverlay } from './hittest.js';
+
+const DETECT_INTERVAL_MS = 500;
 
 const state = {
   guide: GUIDES[0],
@@ -11,6 +15,8 @@ const state = {
   aspect: { id: '4:3', w: 4, h: 3 },
   hitSpots: [],
   burnIn: false,
+  detectedSubjects: [],
+  manualSubject: null,
 };
 
 function applyAspect(video, overlay, aspect) {
@@ -89,6 +95,36 @@ async function onShutter(videoEl) {
   }
 }
 
+function updateHitSpots() {
+  const subjects = [...state.detectedSubjects];
+  if (state.manualSubject) subjects.push(state.manualSubject);
+  if (!state.variant) {
+    state.hitSpots = [];
+    return;
+  }
+  const nextHits = hitTest(subjects, state.variant);
+  const isNewHit = nextHits.some((i) => !state.hitSpots.includes(i));
+  state.hitSpots = nextHits;
+  if (isNewHit && nextHits.length > 0) {
+    navigator.vibrate?.(30);
+  }
+}
+
+function handleOverlayTap(overlay, clientX, clientY) {
+  const rect = overlay.getBoundingClientRect();
+  if (rect.width === 0 || rect.height === 0) return;
+  const nx = (clientX - rect.left) / rect.width;
+  const ny = (clientY - rect.top) / rect.height;
+  if (nx < 0 || nx > 1 || ny < 0 || ny > 1) return;
+  state.manualSubject = { cx: nx, cy: ny, w: 0.05, h: 0.05, label: 'manual', score: 1 };
+  updateHitSpots();
+}
+
+function clearManualSubject() {
+  state.manualSubject = null;
+  updateHitSpots();
+}
+
 async function init() {
   const video = document.getElementById('camera');
   const overlay = document.getElementById('overlayContainer');
@@ -104,6 +140,9 @@ async function init() {
     onShutter: () => onShutter(video),
   });
 
+  overlay.addEventListener('click', (e) => handleOverlayTap(overlay, e.clientX, e.clientY));
+  overlay.addEventListener('dblclick', () => clearManualSubject());
+
   async function tryStartCamera() {
     try {
       await startCamera(video, { facing: 'environment' });
@@ -118,7 +157,31 @@ async function init() {
 
   await tryStartCamera();
 
-  function loop() {
+  const detector = await createDetector();
+  let detecting = false;
+  let lastDetectAt = 0;
+
+  async function runDetection(timestamp) {
+    if (!detector || detecting) return;
+    if (timestamp - lastDetectAt < DETECT_INTERVAL_MS) return;
+    lastDetectAt = timestamp;
+    detecting = true;
+    try {
+      const rawSubjects = await detector.detect(video);
+      const overlayRect = { w: overlay.clientWidth, h: overlay.clientHeight };
+      state.detectedSubjects =
+        video.videoWidth && video.videoHeight && overlayRect.w && overlayRect.h
+          ? rawSubjects.map((s) => mapVideoToOverlay(s, video.videoWidth, video.videoHeight, overlayRect))
+          : [];
+      updateHitSpots();
+    } catch (err) {
+      console.warn('被写体検知に失敗しました', err);
+    } finally {
+      detecting = false;
+    }
+  }
+
+  function loop(timestamp) {
     const dpr = window.devicePixelRatio || 1;
     const cssW = canvas.width / dpr;
     const cssH = canvas.height / dpr;
@@ -135,6 +198,7 @@ async function init() {
         highlight: state.hitSpots,
       });
     }
+    runDetection(timestamp);
     requestAnimationFrame(loop);
   }
   requestAnimationFrame(loop);
