@@ -17,7 +17,8 @@ html, body {
 #app {
   position: relative;
   width: 100vw;
-  height: 100vh;
+  height: 100vh; /* fallback */
+  height: 100dvh; /* iOS Safari: ツールバー分を除いた実表示領域 */
 }
 
 #camera {
