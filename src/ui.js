@@ -15,16 +15,21 @@ const THUMB_H = 72;
  * and the camera-error overlay. All DOM lookups happen inside this function
  * so importing this module is safe in a DOM-free (headless) environment.
  */
-export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacityChange, onBurnInChange, onShutter, onAutoRecommendChange, onRecommendBadgeTap } = {}) {
+export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacityChange, onBurnInChange, onShutter, onAutoRecommendChange } = {}) {
   const strip = document.getElementById('guideStrip');
   const aspectControls = document.getElementById('aspectControls');
   const opacitySlider = document.getElementById('opacitySlider');
   const burnInToggle = document.getElementById('burnInToggle');
   const autoRecommendToggle = document.getElementById('autoRecommendToggle');
-  const recommendBadge = document.getElementById('recommendBadge');
+  const toast = document.getElementById('toast');
+  const sizeAdvice = document.getElementById('sizeAdvice');
   const shutterBtn = document.getElementById('shutterBtn');
   const errorOverlay = document.getElementById('errorOverlay');
   const retryBtn = document.getElementById('retryBtn');
+  let toastHideTimer = null;
+  let toastFadeTimer = null;
+  const SIZE_ADVICE_TEXT = { closer: 'もっと寄って', back: '少し引いて' };
+  let currentSizeAdvice = null;
 
   let selectedGuideId = GUIDES[0]?.id ?? null;
 
@@ -53,6 +58,10 @@ export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacit
       btn.addEventListener('click', () => {
         for (const el of strip.querySelectorAll('.guide-thumb')) el.classList.remove('is-selected');
         btn.classList.add('is-selected');
+        if (autoRecommendToggle?.checked) {
+          autoRecommendToggle.checked = false;
+          onAutoRecommendChange?.(false);
+        }
         if (selectedGuideId === guide.id) {
           onVariantCycle?.(guide.id);
         } else {
@@ -104,13 +113,6 @@ export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacit
     });
   }
 
-  // --- レコメンドバッジ ---
-  if (recommendBadge) {
-    recommendBadge.addEventListener('click', () => {
-      onRecommendBadgeTap?.();
-    });
-  }
-
   // --- シャッターボタン ---
   if (shutterBtn) {
     shutterBtn.addEventListener('click', () => {
@@ -150,13 +152,33 @@ export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacit
       if (shutterBtn) shutterBtn.disabled = false;
       errorOverlay?.classList.add('is-hidden');
     },
-    showRecommendBadge(guideName) {
-      if (!recommendBadge) return;
-      recommendBadge.textContent = `この構図が近い: ${guideName}`;
-      recommendBadge.classList.remove('is-hidden');
+    showToast(text) {
+      if (!toast) return;
+      if (toastHideTimer) clearTimeout(toastHideTimer);
+      if (toastFadeTimer) clearTimeout(toastFadeTimer);
+      toast.textContent = text;
+      toast.classList.remove('is-hidden');
+      toast.classList.remove('is-fading');
+      toastFadeTimer = setTimeout(() => {
+        toast.classList.add('is-fading');
+      }, 1200);
+      toastHideTimer = setTimeout(() => {
+        toast.classList.add('is-hidden');
+      }, 1500);
     },
-    hideRecommendBadge() {
-      recommendBadge?.classList.add('is-hidden');
+    setSizeAdvice(kind) {
+      if (!sizeAdvice || kind === currentSizeAdvice) return;
+      currentSizeAdvice = kind;
+      if (!kind) {
+        sizeAdvice.textContent = '';
+        sizeAdvice.classList.add('is-hidden');
+        return;
+      }
+      sizeAdvice.textContent = SIZE_ADVICE_TEXT[kind] ?? '';
+      sizeAdvice.classList.remove('is-hidden');
+    },
+    setAutoRecommendChecked(value) {
+      if (autoRecommendToggle) autoRecommendToggle.checked = value;
     },
   };
 }
