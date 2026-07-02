@@ -15,10 +15,12 @@ const THUMB_H = 72;
  * and the camera-error overlay. All DOM lookups happen inside this function
  * so importing this module is safe in a DOM-free (headless) environment.
  */
-export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacityChange } = {}) {
+export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacityChange, onBurnInChange, onShutter } = {}) {
   const strip = document.getElementById('guideStrip');
   const aspectControls = document.getElementById('aspectControls');
   const opacitySlider = document.getElementById('opacitySlider');
+  const burnInToggle = document.getElementById('burnInToggle');
+  const shutterBtn = document.getElementById('shutterBtn');
   const errorOverlay = document.getElementById('errorOverlay');
   const retryBtn = document.getElementById('retryBtn');
 
@@ -83,6 +85,20 @@ export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacit
   if (opacitySlider) {
     opacitySlider.addEventListener('input', () => {
       onOpacityChange?.(Number(opacitySlider.value));
+    });
+  }
+
+  // --- ガイド焼き込みトグル ---
+  if (burnInToggle) {
+    burnInToggle.addEventListener('change', () => {
+      onBurnInChange?.(burnInToggle.checked);
+    });
+  }
+
+  // --- シャッターボタン ---
+  if (shutterBtn) {
+    shutterBtn.addEventListener('click', () => {
+      onShutter?.();
     });
   }
 

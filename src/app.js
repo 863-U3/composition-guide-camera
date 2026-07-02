@@ -2,6 +2,7 @@ import { GUIDES } from './guides/index.js';
 import { drawGuide } from './renderer.js';
 import { startCamera } from './camera.js';
 import { initUI } from './ui.js';
+import { capture, download } from './capture.js';
 
 const state = {
   guide: GUIDES[0],
@@ -9,6 +10,7 @@ const state = {
   opacity: 0.8,
   aspect: { id: '4:3', w: 4, h: 3 },
   hitSpots: [],
+  burnIn: false,
 };
 
 function applyAspect(video, overlay, aspect) {
@@ -66,6 +68,19 @@ function setOpacity(value) {
   state.opacity = value;
 }
 
+function setBurnIn(value) {
+  state.burnIn = value;
+}
+
+async function onShutter(videoEl) {
+  const blob = await capture(videoEl, {
+    burnIn: state.burnIn,
+    variant: state.variant,
+    opacity: state.opacity,
+  });
+  download(blob);
+}
+
 async function init() {
   const video = document.getElementById('camera');
   const overlay = document.getElementById('overlayContainer');
@@ -77,6 +92,8 @@ async function init() {
     onVariantCycle: cycleVariant,
     onAspectChange: (aspect) => setAspect(video, overlay, aspect),
     onOpacityChange: setOpacity,
+    onBurnInChange: setBurnIn,
+    onShutter: () => onShutter(video),
   });
 
   async function tryStartCamera() {

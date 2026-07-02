@@ -20,9 +20,21 @@
         <label for="opacitySlider">濃度</label>
         <input type="range" id="opacitySlider" min="0" max="1" step="0.05" value="0.8" />
       </div>
+      <div id="burnInControl" class="controls-row">
+        <input type="checkbox" id="burnInToggle" />
+        <label for="burnInToggle">ガイド焼き込み</label>
+      </div>
     </header>
 
     <footer id="bottomBar">
+      <div id="shutterContainer">
+        <button id="shutterBtn" type="button" aria-label="撮影">
+          <svg viewBox="0 0 48 48" width="48" height="48">
+            <circle cx="24" cy="24" r="20" fill="currentColor" />
+            <circle cx="24" cy="24" r="16" fill="#000" />
+          </svg>
+        </button>
+      </div>
       <div id="guideStrip"></div>
     </footer>
 
