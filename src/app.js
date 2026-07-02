@@ -128,8 +128,10 @@ function switchToRecommendedGuide(ui) {
 }
 
 function updateAutoRecommend(ui) {
-  if (!state.autoRecommend || state.detectedSubjects.length === 0) return;
-  const ranked = recommend(state.detectedSubjects, GUIDES);
+  const subjects = [...state.detectedSubjects];
+  if (state.manualSubject) subjects.push(state.manualSubject);
+  if (!state.autoRecommend || subjects.length === 0) return;
+  const ranked = recommend(subjects, GUIDES);
   if (!ranked.length) return;
   const top = ranked[0];
   state.recommendHistory.push(top.guideId);
