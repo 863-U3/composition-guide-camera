@@ -1,33 +1,52 @@
 import { GUIDES } from './guides/index.js';
-import { drawGuide } from './renderer.js';
+import { drawGuide, drawArrow, drawLevel } from './renderer.js';
 import { startCamera } from './camera.js';
 import { initUI } from './ui.js';
 import { capture, download } from './capture.js';
 import { createDetector } from './detector.js';
 import { hitTest, mapVideoToOverlay, visibleVideoRect } from './hittest.js';
 import { recommend, stableTop } from './recommender.js';
+import { guidanceVector, sizeAdvice, primarySubject, levelState } from './guidance.js';
 
 const DETECT_INTERVAL_MS = 500;
 const RECOMMEND_SCORE_MARGIN = 0.15;
-const RECOMMEND_BADGE_AUTO_HIDE_MS = 3000;
 const RECOMMEND_SUPPRESS_MS = 5000;
 
 const state = {
   guide: GUIDES[0],
   variant: GUIDES[0]?.variants[0],
-  opacity: 0.8,
+  opacity: 0.5,
   aspect: { id: '4:3', w: 4, h: 3 },
   hitSpots: [],
   burnIn: false,
   detectedSubjects: [],
   manualSubject: null,
-  autoRecommend: false,
+  autoRecommend: true,
   recommendHistory: [],
-  recommendBadgeGuideId: null,
-  recommendBadgeVariantId: null,
-  suppressedGuideId: null,
-  suppressedUntil: 0,
+  lastAutoSwitchAt: 0,
+  levelEnabled: false,
+  rollDeg: null,
+  levelSince: null,
 };
+
+let onDeviceOrientation = null;
+
+function setLevelEnabled(value) {
+  state.levelEnabled = value;
+  if (value) {
+    if (!onDeviceOrientation) {
+      onDeviceOrientation = (event) => {
+        state.rollDeg = event.gamma ?? null;
+      };
+    }
+    window.addEventListener('deviceorientation', onDeviceOrientation);
+  } else {
+    if (onDeviceOrientation) {
+      window.removeEventListener('deviceorientation', onDeviceOrientation);
+    }
+    state.rollDeg = null;
+  }
+}
 
 function applyAspect(video, overlay, aspect) {
   const containerW = window.innerWidth;
@@ -91,44 +110,22 @@ function setBurnIn(value) {
 function setAutoRecommend(value, ui) {
   state.autoRecommend = value;
   state.recommendHistory = [];
-  if (!value) {
-    state.recommendBadgeGuideId = null;
-    state.recommendBadgeVariantId = null;
-    ui?.hideRecommendBadge();
-  }
 }
 
-let badgeHideTimer = null;
-
-function hideRecommendBadge(ui) {
-  state.recommendBadgeGuideId = null;
-  state.recommendBadgeVariantId = null;
-  ui.hideRecommendBadge();
-  if (badgeHideTimer) {
-    clearTimeout(badgeHideTimer);
-    badgeHideTimer = null;
-  }
-}
-
-function dismissRecommendBadge(ui, guideId) {
-  state.suppressedGuideId = guideId;
-  state.suppressedUntil = Date.now() + RECOMMEND_SUPPRESS_MS;
-  hideRecommendBadge(ui);
-}
-
-function switchToRecommendedGuide(ui) {
-  const guideId = state.recommendBadgeGuideId;
-  const variantId = state.recommendBadgeVariantId;
-  if (!guideId) return;
+function switchToGuide(ui, guideId, variantId) {
   const guide = GUIDES.find((g) => g.id === guideId);
   if (!guide) return;
   state.guide = guide;
   state.variant = guide.variants.find((v) => v.id === variantId) ?? guide.variants[0];
   ui.selectGuide?.(guideId);
-  dismissRecommendBadge(ui, guideId);
+  state.lastAutoSwitchAt = Date.now();
+  const baseName = guide.name ?? guideId;
+  const label = baseName.endsWith('構図') ? baseName : `${baseName}構図`;
+  ui.showToast?.(label);
 }
 
 function updateAutoRecommend(ui) {
+  if (Date.now() - state.lastAutoSwitchAt < RECOMMEND_SUPPRESS_MS) return;
   const subjects = [...state.detectedSubjects];
   if (state.manualSubject) subjects.push(state.manualSubject);
   if (!state.autoRecommend || subjects.length === 0) return;
@@ -141,26 +138,13 @@ function updateAutoRecommend(ui) {
   const stableGuideId = stableTop(state.recommendHistory);
   if (!stableGuideId) return;
   if (stableGuideId === state.guide?.id) return;
-  if (state.suppressedGuideId === stableGuideId && Date.now() < state.suppressedUntil) return;
 
   const currentScore = ranked.find((r) => r.guideId === state.guide?.id)?.score ?? 0;
   const stableEntry = ranked.find((r) => r.guideId === stableGuideId);
   if (!stableEntry) return;
   if (stableEntry.score - currentScore <= RECOMMEND_SCORE_MARGIN) return;
 
-  if (state.recommendBadgeGuideId === stableGuideId) return;
-
-  state.recommendBadgeGuideId = stableGuideId;
-  state.recommendBadgeVariantId = stableEntry.variantId;
-  const guide = GUIDES.find((g) => g.id === stableGuideId);
-  ui.showRecommendBadge(guide?.name ?? stableGuideId);
-
-  if (badgeHideTimer) clearTimeout(badgeHideTimer);
-  badgeHideTimer = setTimeout(() => {
-    if (state.recommendBadgeGuideId === stableGuideId) {
-      dismissRecommendBadge(ui, stableGuideId);
-    }
-  }, RECOMMEND_BADGE_AUTO_HIDE_MS);
+  switchToGuide(ui, stableGuideId, stableEntry.variantId);
 }
 
 async function onShutter(videoEl, overlay) {
@@ -238,7 +222,7 @@ async function init() {
     onBurnInChange: setBurnIn,
     onShutter: () => onShutter(video, overlay),
     onAutoRecommendChange: (value) => setAutoRecommend(value, ui),
-    onRecommendBadgeTap: () => switchToRecommendedGuide(ui),
+    onLevelToggle: setLevelEnabled,
   });
 
   video.addEventListener('click', (e) => handleOverlayTap(overlay, e.clientX, e.clientY));
@@ -309,6 +293,42 @@ async function init() {
         highlight: state.hitSpots,
       });
     }
+
+    if (state.levelEnabled && state.rollDeg != null) {
+      const { level } = levelState(state.rollDeg);
+      const now = Date.now();
+      if (level) {
+        if (state.levelSince == null) state.levelSince = now;
+      } else {
+        state.levelSince = null;
+      }
+      const elapsed = level && state.levelSince != null ? now - state.levelSince : 0;
+      if (!level || elapsed <= 1000) {
+        drawLevel(ctx, state.rollDeg, cssW, cssH, { level });
+      } else {
+        const alpha = 1 - Math.min(Math.max((elapsed - 1000) / 300, 0), 1);
+        if (alpha > 0) {
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          drawLevel(ctx, state.rollDeg, cssW, cssH, { level });
+          ctx.restore();
+        }
+      }
+    }
+
+    const subj = primarySubject(state.detectedSubjects, state.manualSubject);
+    if (subj) {
+      const gv = guidanceVector(subj, state.variant);
+      if (gv && gv.dist > 0) {
+        const from = { x: subj.cx, y: subj.cy };
+        const to = { x: subj.cx + gv.dx, y: subj.cy + gv.dy };
+        drawArrow(ctx, from, to, cssW, cssH, { dist: gv.dist });
+      }
+      ui.setSizeAdvice?.(sizeAdvice(subj));
+    } else {
+      ui.setSizeAdvice?.(null);
+    }
+
     runDetection(timestamp);
     requestAnimationFrame(loop);
   }
@@ -323,4 +343,4 @@ if (typeof document !== 'undefined') {
   }
 }
 
-export { state, applyAspect, setGuide, cycleVariant, setAspect, setOpacity, setAutoRecommend, init };
+export { state, applyAspect, setGuide, cycleVariant, setAspect, setOpacity, setAutoRecommend, setLevelEnabled, init };
