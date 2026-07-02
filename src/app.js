@@ -34,8 +34,11 @@ function applyAspect(video, overlay, aspect) {
 
   const canvas = overlay.querySelector('canvas');
   if (canvas) {
-    canvas.width = Math.round(w);
-    canvas.height = Math.round(h);
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+    canvas.style.width = `${w}px`;
+    canvas.style.height = `${h}px`;
   }
 }
 
@@ -91,9 +94,18 @@ async function init() {
   await tryStartCamera();
 
   function loop() {
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.width / dpr;
+    const cssH = canvas.height / dpr;
+
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.restore();
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     if (state.variant) {
-      drawGuide(ctx, state.variant, canvas.width, canvas.height, {
+      drawGuide(ctx, state.variant, cssW, cssH, {
         opacity: state.opacity,
         highlight: state.hitSpots,
       });
