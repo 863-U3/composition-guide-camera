@@ -23,10 +23,10 @@ const state = {
   manualSubject: null,
   autoRecommend: true,
   recommendHistory: [],
-  suppressedGuideId: null,
-  suppressedUntil: 0,
+  lastAutoSwitchAt: 0,
   levelEnabled: false,
   rollDeg: null,
+  levelSince: null,
 };
 
 let onDeviceOrientation = null;
@@ -118,12 +118,14 @@ function switchToGuide(ui, guideId, variantId) {
   state.guide = guide;
   state.variant = guide.variants.find((v) => v.id === variantId) ?? guide.variants[0];
   ui.selectGuide?.(guideId);
-  state.suppressedGuideId = guideId;
-  state.suppressedUntil = Date.now() + RECOMMEND_SUPPRESS_MS;
-  ui.showToast?.(guide.name ?? guideId);
+  state.lastAutoSwitchAt = Date.now();
+  const baseName = guide.name ?? guideId;
+  const label = baseName.endsWith('構図') ? baseName : `${baseName}構図`;
+  ui.showToast?.(label);
 }
 
 function updateAutoRecommend(ui) {
+  if (Date.now() - state.lastAutoSwitchAt < RECOMMEND_SUPPRESS_MS) return;
   const subjects = [...state.detectedSubjects];
   if (state.manualSubject) subjects.push(state.manualSubject);
   if (!state.autoRecommend || subjects.length === 0) return;
@@ -136,7 +138,6 @@ function updateAutoRecommend(ui) {
   const stableGuideId = stableTop(state.recommendHistory);
   if (!stableGuideId) return;
   if (stableGuideId === state.guide?.id) return;
-  if (state.suppressedGuideId === stableGuideId && Date.now() < state.suppressedUntil) return;
 
   const currentScore = ranked.find((r) => r.guideId === state.guide?.id)?.score ?? 0;
   const stableEntry = ranked.find((r) => r.guideId === stableGuideId);
@@ -295,7 +296,24 @@ async function init() {
 
     if (state.levelEnabled && state.rollDeg != null) {
       const { level } = levelState(state.rollDeg);
-      drawLevel(ctx, state.rollDeg, cssW, cssH, { level });
+      const now = Date.now();
+      if (level) {
+        if (state.levelSince == null) state.levelSince = now;
+      } else {
+        state.levelSince = null;
+      }
+      const elapsed = level && state.levelSince != null ? now - state.levelSince : 0;
+      if (!level || elapsed <= 1000) {
+        drawLevel(ctx, state.rollDeg, cssW, cssH, { level });
+      } else {
+        const alpha = 1 - Math.min(Math.max((elapsed - 1000) / 300, 0), 1);
+        if (alpha > 0) {
+          ctx.save();
+          ctx.globalAlpha = alpha;
+          drawLevel(ctx, state.rollDeg, cssW, cssH, { level });
+          ctx.restore();
+        }
+      }
     }
 
     const subj = primarySubject(state.detectedSubjects, state.manualSubject);
