@@ -129,6 +129,18 @@ export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacit
   return {
     guides: GUIDES,
     aspects: ASPECTS,
+    // コールバックを発火せず、選択状態(selectedGuideId + .is-selected)だけ同期する。
+    // バッジ経由でガイドを切り替えた後、次のサムネタップが誤ってvariant cycleに
+    // 入らないようにするため。
+    selectGuide(guideId) {
+      if (!GUIDES.some((g) => g.id === guideId)) return;
+      selectedGuideId = guideId;
+      if (strip) {
+        for (const el of strip.querySelectorAll('.guide-thumb')) {
+          el.classList.toggle('is-selected', el.dataset.guideId === guideId);
+        }
+      }
+    },
     showError(onRetry) {
       retryHandler = onRetry;
       if (shutterBtn) shutterBtn.disabled = true;

@@ -4,7 +4,7 @@ import { startCamera } from './camera.js';
 import { initUI } from './ui.js';
 import { capture, download } from './capture.js';
 import { createDetector } from './detector.js';
-import { hitTest, mapVideoToOverlay } from './hittest.js';
+import { hitTest, mapVideoToOverlay, visibleVideoRect } from './hittest.js';
 import { recommend, stableTop } from './recommender.js';
 
 const DETECT_INTERVAL_MS = 500;
@@ -124,6 +124,7 @@ function switchToRecommendedGuide(ui) {
   if (!guide) return;
   state.guide = guide;
   state.variant = guide.variants.find((v) => v.id === variantId) ?? guide.variants[0];
+  ui.selectGuide?.(guideId);
   dismissRecommendBadge(ui, guideId);
 }
 
@@ -162,12 +163,26 @@ function updateAutoRecommend(ui) {
   }, RECOMMEND_BADGE_AUTO_HIDE_MS);
 }
 
-async function onShutter(videoEl) {
+async function onShutter(videoEl, overlay) {
   try {
+    let crop;
+    if (videoEl.videoWidth && videoEl.videoHeight && overlay) {
+      const r = overlay.getBoundingClientRect();
+      if (r.width && r.height) {
+        crop = visibleVideoRect(
+          videoEl.videoWidth,
+          videoEl.videoHeight,
+          window.innerWidth,
+          window.innerHeight,
+          { x: r.left, y: r.top, w: r.width, h: r.height },
+        );
+      }
+    }
     const blob = await capture(videoEl, {
       burnIn: state.burnIn,
       variant: state.variant,
       opacity: state.opacity,
+      crop,
     });
     if (!blob) {
       console.warn('撮影に失敗しました');
@@ -221,7 +236,7 @@ async function init() {
     onAspectChange: (aspect) => setAspect(video, overlay, aspect),
     onOpacityChange: setOpacity,
     onBurnInChange: setBurnIn,
-    onShutter: () => onShutter(video),
+    onShutter: () => onShutter(video, overlay),
     onAutoRecommendChange: (value) => setAutoRecommend(value, ui),
     onRecommendBadgeTap: () => switchToRecommendedGuide(ui),
   });
@@ -254,10 +269,19 @@ async function init() {
     detecting = true;
     try {
       const rawSubjects = await detector.detect(video);
-      const overlayRect = { w: overlay.clientWidth, h: overlay.clientHeight };
+      const r = overlay.getBoundingClientRect();
+      const overlayRect = { x: r.left, y: r.top, w: r.width, h: r.height };
       state.detectedSubjects =
         video.videoWidth && video.videoHeight && overlayRect.w && overlayRect.h
-          ? rawSubjects.map((s) => mapVideoToOverlay(s, video.videoWidth, video.videoHeight, overlayRect))
+          ? rawSubjects.map((s) =>
+              mapVideoToOverlay(
+                s,
+                video.videoWidth,
+                video.videoHeight,
+                window.innerWidth,
+                window.innerHeight,
+                overlayRect,
+              ))
           : [];
       updateHitSpots();
       updateAutoRecommend(ui);

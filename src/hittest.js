@@ -8,34 +8,40 @@ export function hitTest(subjects, variant) {
   return [...hits].sort((a, b) => a - b);
 }
 
-// video座標系(0-1, videoW x videoH)の正規化被写体を、overlay座標系(0-1, overlayRect.w x overlayRect.h)へ変換する。
-// overlayはvideoに対して中央寄せcover-fit（applyAspectと同じ幾何）で表示されている前提。
-export function mapVideoToOverlay(subject, videoW, videoH, overlayRect) {
-  const videoRatio = videoW / videoH;
-  const overlayRatio = overlayRect.w / overlayRect.h;
+// videoはwindow全体にcover-fitされ、overlayはwindow内の中央サブ矩形。
+// video画素座標系での cover-fit 幾何（scale・中央寄せオフセット）を返す。
+function coverFit(videoW, videoH, windowW, windowH) {
+  const scale = Math.max(windowW / videoW, windowH / videoH);
+  const dispX0 = (windowW - videoW * scale) / 2;
+  const dispY0 = (windowH - videoH * scale) / 2;
+  return { scale, dispX0, dispY0 };
+}
 
-  // videoフレーム内で、overlayに実際に表示されている領域(クロップ矩形, video px単位)を求める
-  let cropW;
-  let cropH;
-  if (overlayRatio > videoRatio) {
-    // overlayの方が横長 → videoの上下がクロップされる
-    cropW = videoW;
-    cropH = videoW / overlayRatio;
-  } else {
-    // overlayの方が縦長（または同じ） → videoの左右がクロップされる
-    cropH = videoH;
-    cropW = videoH * overlayRatio;
-  }
-  const cropX = (videoW - cropW) / 2;
-  const cropY = (videoH - cropH) / 2;
+// overlay(window内のbounding rect: {x,y,w,h})が実際に見せている
+// videoフレーム内の画素矩形 {x,y,w,h}（video px単位）を返す純関数。
+// キャプチャのクロップ元矩形にそのまま使える。
+export function visibleVideoRect(videoW, videoH, windowW, windowH, overlayRect) {
+  const { scale, dispX0, dispY0 } = coverFit(videoW, videoH, windowW, windowH);
+  return {
+    x: (overlayRect.x - dispX0) / scale,
+    y: (overlayRect.y - dispY0) / scale,
+    w: overlayRect.w / scale,
+    h: overlayRect.h / scale,
+  };
+}
 
+// video正規化(0-1)の被写体を overlay正規化(0-1)へ変換する。
+// 変換鎖: video正規化 → window CSS px(cover-fit) → overlay正規化(overlayのbounding rect)。
+// overlayRect は {x,y,w,h}（window座標系のbounding rect）。
+export function mapVideoToOverlay(subject, videoW, videoH, windowW, windowH, overlayRect) {
+  const crop = visibleVideoRect(videoW, videoH, windowW, windowH, overlayRect);
   const subjectPxX = subject.cx * videoW;
   const subjectPxY = subject.cy * videoH;
-
-  const cx = (subjectPxX - cropX) / cropW;
-  const cy = (subjectPxY - cropY) / cropH;
-  const w = (subject.w * videoW) / cropW;
-  const h = (subject.h * videoH) / cropH;
-
-  return { ...subject, cx, cy, w, h };
+  return {
+    ...subject,
+    cx: (subjectPxX - crop.x) / crop.w,
+    cy: (subjectPxY - crop.y) / crop.h,
+    w: (subject.w * videoW) / crop.w,
+    h: (subject.h * videoH) / crop.h,
+  };
 }
