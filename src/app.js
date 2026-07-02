@@ -23,8 +23,6 @@ const state = {
   manualSubject: null,
   autoRecommend: true,
   recommendHistory: [],
-  recommendBadgeGuideId: null,
-  recommendBadgeVariantId: null,
   suppressedGuideId: null,
   suppressedUntil: 0,
 };
@@ -91,10 +89,6 @@ function setBurnIn(value) {
 function setAutoRecommend(value, ui) {
   state.autoRecommend = value;
   state.recommendHistory = [];
-  if (!value) {
-    state.recommendBadgeGuideId = null;
-    state.recommendBadgeVariantId = null;
-  }
 }
 
 function switchToGuide(ui, guideId, variantId) {
@@ -128,8 +122,6 @@ function updateAutoRecommend(ui) {
   if (!stableEntry) return;
   if (stableEntry.score - currentScore <= RECOMMEND_SCORE_MARGIN) return;
 
-  state.recommendBadgeGuideId = stableGuideId;
-  state.recommendBadgeVariantId = stableEntry.variantId;
   switchToGuide(ui, stableGuideId, stableEntry.variantId);
 }
 

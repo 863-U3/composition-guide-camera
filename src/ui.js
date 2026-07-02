@@ -177,8 +177,5 @@ export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacit
       sizeAdvice.textContent = SIZE_ADVICE_TEXT[kind] ?? '';
       sizeAdvice.classList.remove('is-hidden');
     },
-    setAutoRecommendChecked(value) {
-      if (autoRecommendToggle) autoRecommendToggle.checked = value;
-    },
   };
 }
