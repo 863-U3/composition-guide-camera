@@ -1,0 +1,243 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  color: #fff;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+#app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+}
+
+#camera {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #000;
+}
+
+#overlayContainer {
+  position: absolute;
+  overflow: hidden;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+#guideCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+#topBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: calc(10px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 10px calc(12px + env(safe-area-inset-left));
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 10;
+  touch-action: manipulation;
+}
+
+.controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aspect-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  padding: 6px 10px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 6px;
+  font-size: 12px;
+  touch-action: manipulation;
+}
+
+.aspect-btn.is-selected {
+  background: #fff;
+  color: #000;
+  font-weight: bold;
+}
+
+#opacityControl label {
+  font-size: 12px;
+}
+
+#burnInControl {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+#burnInControl label {
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#burnInToggle {
+  width: 24px;
+  height: 24px;
+  min-width: 44px;
+  min-height: 44px;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+#bottomBar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 12px calc(0px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(0px + env(safe-area-inset-left));
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  touch-action: manipulation;
+}
+
+#recommendBadge {
+  background: rgba(255, 255, 255, 0.92);
+  color: #000;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 16px;
+  min-height: 44px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+#shutterContainer {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+#shutterBtn {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  background: #fff;
+  color: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: opacity 0.2s;
+  touch-action: manipulation;
+}
+
+#shutterBtn:hover {
+  opacity: 0.9;
+}
+
+#shutterBtn:active {
+  opacity: 0.8;
+}
+
+#shutterBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+#guideStrip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 0 12px;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+}
+
+.guide-thumb {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  background: transparent;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  padding: 2px;
+  min-width: 44px;
+  min-height: 44px;
+  touch-action: manipulation;
+}
+
+.guide-thumb canvas {
+  width: 96px;
+  height: 72px;
+  border-radius: 4px;
+  background: #111;
+}
+
+.guide-thumb.is-selected {
+  border-color: #ffe066;
+}
+
+.guide-thumb-label {
+  font-size: 10px;
+  color: #fff;
+  white-space: nowrap;
+}
+
+#errorOverlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  background: #000;
+  z-index: 20;
+}
+
+#errorOverlay p {
+  font-size: 16px;
+}
+
+#errorOverlay button {
+  background: #fff;
+  color: #000;
+  border: none;
+  padding: 10px 20px;
+  min-height: 44px;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: bold;
+  touch-action: manipulation;
+}
+
+.is-hidden {
+  display: none !important;
+}

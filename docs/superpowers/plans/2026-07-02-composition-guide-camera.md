@@ -64,7 +64,7 @@ test('黄金比の分割線は0.382/0.618位置', () => {
 });
 ```
 
-- [ ] **Step 2: 落ちることを確認** — Run: `node --test test/` → Expected: FAIL (module not found)
+- [ ] **Step 2: 落ちることを確認** — Run: `npm test`（=node --test） → Expected: FAIL (module not found)
 
 - [ ] **Step 3: 実装**
 
@@ -153,7 +153,7 @@ import { thirds, triangle, golden, silver } from './basic.js';
 export const GUIDES = [thirds, triangle, golden, silver];
 ```
 
-- [ ] **Step 4: テスト通過確認** — Run: `node --test test/` → Expected: PASS
+- [ ] **Step 4: テスト通過確認** — Run: `npm test`（=node --test） → Expected: PASS
 - [ ] **Step 5: Commit** — `git add -A && git commit -m "feat: ガイドスキーマ＋基本4種定義"`
 
 ---
@@ -195,7 +195,7 @@ test('日の丸のスポットは中央', () => {
 });
 ```
 
-- [ ] **Step 2: 落ちる確認** — `node --test test/` → FAIL
+- [ ] **Step 2: 落ちる確認** — `npm test`（=node --test） → FAIL
 - [ ] **Step 3: 実装**
 
 ```js
@@ -252,7 +252,7 @@ import { phiGrid, railman, diagonal, symmetry, hinomaru } from './advanced.js';
 export const GUIDES = [thirds, triangle, golden, silver, phiGrid, railman, diagonal, symmetry, hinomaru];
 ```
 
-- [ ] **Step 4: 通過確認** — `node --test test/` → PASS
+- [ ] **Step 4: 通過確認** — `npm test`（=node --test） → PASS
 - [ ] **Step 5: Commit** — `git commit -am "feat: 応用5種ガイド定義"`
 
 ---
@@ -300,7 +300,7 @@ test('被写体ゼロなら全スコア0', () => {
 });
 ```
 
-- [ ] **Step 2: 落ちる確認** — `node --test test/recommender.test.js` → FAIL
+- [ ] **Step 2: 落ちる確認** — `npm testrecommender.test.js` → FAIL
 - [ ] **Step 3: 実装**
 
 ```js
@@ -335,7 +335,7 @@ export function recommend(subjects, guides) {
 }
 ```
 
-- [ ] **Step 4: 通過確認** — `node --test test/` → PASS（全テスト）
+- [ ] **Step 4: 通過確認** — `npm test`（=node --test） → PASS（全テスト）
 - [ ] **Step 5: Commit** — `git commit -am "feat: 構図レコメンダー"`
 
 ---
@@ -531,7 +531,7 @@ test('スポット半径内の被写体中心はヒット', () => {
 });
 ```
 
-- [ ] **Step 2: 落ちる確認** — `node --test test/hittest.test.js` → FAIL
+- [ ] **Step 2: 落ちる確認** — `npm testhittest.test.js` → FAIL
 - [ ] **Step 3: 実装**（hitTestは純関数で`src/hittest.js`へ。detector.jsはCDNの`cocoSsd`グローバルをラップ、検出は500ms間隔スロットル、`videoWidth`で正規化。TF未ロード/失敗はconsole警告＋null）
 
 ```js
@@ -547,7 +547,7 @@ export function hitTest(subjects, variant) {
 }
 ```
 
-- [ ] **Step 4: 通過確認** — `node --test test/` → PASS
+- [ ] **Step 4: 通過確認** — `npm test`（=node --test） → PASS
 - [ ] **Step 5: 統合** — app.jsで検出結果→`state.hitSpots = hitTest(subjects, variant)`。合致時に発光（renderer実装済み）＋`navigator.vibrate?.(30)`。手動フォールバック: canvasタップで被写体1点指定（検出リストに追加、次のタップで移動）
 - [ ] **Step 6: 実駆動確認** — Webカメラの前でコップ等を動かし、スポットに入ると発光すること
 - [ ] **Step 7: Commit** — `git add -A && git commit -m "feat: 被写体自動検知＋合致発光"`
@@ -586,7 +586,7 @@ export function stableTop(history) {
 }
 ```
 
-- [ ] **Step 2: テスト通過確認** — `node --test test/` → PASS
+- [ ] **Step 2: テスト通過確認** — `npm test`（=node --test） → PASS
 - [ ] **Step 3: 実駆動確認** — テーブル上の物を映して構図提案が出る・タップで切替わること
 - [ ] **Step 4: Commit** — `git commit -am "feat: おまかせ構図レコメンド"`
 

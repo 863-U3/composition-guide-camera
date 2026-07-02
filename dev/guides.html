@@ -1,0 +1,15 @@
+<!doctype html><meta charset="utf-8"><title>guides check</title>
+<style>body{background:#222;color:#eee;font-family:sans-serif;display:flex;flex-wrap:wrap;gap:8px}figure{margin:0}figcaption{font-size:11px;text-align:center}</style>
+<script type="module">
+import { GUIDES } from '../src/guides/index.js';
+import { drawGuide } from '../src/renderer.js';
+for (const g of GUIDES) for (const v of g.variants) {
+  const fig = document.createElement('figure');
+  const c = Object.assign(document.createElement('canvas'), { width: 300, height: 225 });
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, 300, 225);
+  drawGuide(ctx, v, 300, 225, { highlight: [0] });
+  fig.append(c, Object.assign(document.createElement('figcaption'), { textContent: `${g.name} / ${v.id}` }));
+  document.body.append(fig);
+}
+</script>
