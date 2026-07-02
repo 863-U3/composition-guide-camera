@@ -15,11 +15,13 @@ const THUMB_H = 72;
  * and the camera-error overlay. All DOM lookups happen inside this function
  * so importing this module is safe in a DOM-free (headless) environment.
  */
-export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacityChange, onBurnInChange, onShutter } = {}) {
+export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacityChange, onBurnInChange, onShutter, onAutoRecommendChange, onRecommendBadgeTap } = {}) {
   const strip = document.getElementById('guideStrip');
   const aspectControls = document.getElementById('aspectControls');
   const opacitySlider = document.getElementById('opacitySlider');
   const burnInToggle = document.getElementById('burnInToggle');
+  const autoRecommendToggle = document.getElementById('autoRecommendToggle');
+  const recommendBadge = document.getElementById('recommendBadge');
   const shutterBtn = document.getElementById('shutterBtn');
   const errorOverlay = document.getElementById('errorOverlay');
   const retryBtn = document.getElementById('retryBtn');
@@ -95,6 +97,20 @@ export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacit
     });
   }
 
+  // --- おまかせ構図トグル ---
+  if (autoRecommendToggle) {
+    autoRecommendToggle.addEventListener('change', () => {
+      onAutoRecommendChange?.(autoRecommendToggle.checked);
+    });
+  }
+
+  // --- レコメンドバッジ ---
+  if (recommendBadge) {
+    recommendBadge.addEventListener('click', () => {
+      onRecommendBadgeTap?.();
+    });
+  }
+
   // --- シャッターボタン ---
   if (shutterBtn) {
     shutterBtn.addEventListener('click', () => {
@@ -121,6 +137,14 @@ export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacit
     hideError() {
       if (shutterBtn) shutterBtn.disabled = false;
       errorOverlay?.classList.add('is-hidden');
+    },
+    showRecommendBadge(guideName) {
+      if (!recommendBadge) return;
+      recommendBadge.textContent = `この構図が近い: ${guideName}`;
+      recommendBadge.classList.remove('is-hidden');
+    },
+    hideRecommendBadge() {
+      recommendBadge?.classList.add('is-hidden');
     },
   };
 }

@@ -5,8 +5,12 @@ import { initUI } from './ui.js';
 import { capture, download } from './capture.js';
 import { createDetector } from './detector.js';
 import { hitTest, mapVideoToOverlay } from './hittest.js';
+import { recommend, stableTop } from './recommender.js';
 
 const DETECT_INTERVAL_MS = 500;
+const RECOMMEND_SCORE_MARGIN = 0.15;
+const RECOMMEND_BADGE_AUTO_HIDE_MS = 3000;
+const RECOMMEND_SUPPRESS_MS = 5000;
 
 const state = {
   guide: GUIDES[0],
@@ -17,6 +21,12 @@ const state = {
   burnIn: false,
   detectedSubjects: [],
   manualSubject: null,
+  autoRecommend: false,
+  recommendHistory: [],
+  recommendBadgeGuideId: null,
+  recommendBadgeVariantId: null,
+  suppressedGuideId: null,
+  suppressedUntil: 0,
 };
 
 function applyAspect(video, overlay, aspect) {
@@ -76,6 +86,78 @@ function setOpacity(value) {
 
 function setBurnIn(value) {
   state.burnIn = value;
+}
+
+function setAutoRecommend(value, ui) {
+  state.autoRecommend = value;
+  state.recommendHistory = [];
+  if (!value) {
+    state.recommendBadgeGuideId = null;
+    state.recommendBadgeVariantId = null;
+    ui?.hideRecommendBadge();
+  }
+}
+
+let badgeHideTimer = null;
+
+function hideRecommendBadge(ui) {
+  state.recommendBadgeGuideId = null;
+  state.recommendBadgeVariantId = null;
+  ui.hideRecommendBadge();
+  if (badgeHideTimer) {
+    clearTimeout(badgeHideTimer);
+    badgeHideTimer = null;
+  }
+}
+
+function dismissRecommendBadge(ui, guideId) {
+  state.suppressedGuideId = guideId;
+  state.suppressedUntil = Date.now() + RECOMMEND_SUPPRESS_MS;
+  hideRecommendBadge(ui);
+}
+
+function switchToRecommendedGuide(ui) {
+  const guideId = state.recommendBadgeGuideId;
+  const variantId = state.recommendBadgeVariantId;
+  if (!guideId) return;
+  const guide = GUIDES.find((g) => g.id === guideId);
+  if (!guide) return;
+  state.guide = guide;
+  state.variant = guide.variants.find((v) => v.id === variantId) ?? guide.variants[0];
+  dismissRecommendBadge(ui, guideId);
+}
+
+function updateAutoRecommend(ui) {
+  if (!state.autoRecommend || state.detectedSubjects.length === 0) return;
+  const ranked = recommend(state.detectedSubjects, GUIDES);
+  if (!ranked.length) return;
+  const top = ranked[0];
+  state.recommendHistory.push(top.guideId);
+  if (state.recommendHistory.length > 5) state.recommendHistory.shift();
+
+  const stableGuideId = stableTop(state.recommendHistory);
+  if (!stableGuideId) return;
+  if (stableGuideId === state.guide?.id) return;
+  if (state.suppressedGuideId === stableGuideId && Date.now() < state.suppressedUntil) return;
+
+  const currentScore = ranked.find((r) => r.guideId === state.guide?.id)?.score ?? 0;
+  const stableEntry = ranked.find((r) => r.guideId === stableGuideId);
+  if (!stableEntry) return;
+  if (stableEntry.score - currentScore <= RECOMMEND_SCORE_MARGIN) return;
+
+  if (state.recommendBadgeGuideId === stableGuideId) return;
+
+  state.recommendBadgeGuideId = stableGuideId;
+  state.recommendBadgeVariantId = stableEntry.variantId;
+  const guide = GUIDES.find((g) => g.id === stableGuideId);
+  ui.showRecommendBadge(guide?.name ?? stableGuideId);
+
+  if (badgeHideTimer) clearTimeout(badgeHideTimer);
+  badgeHideTimer = setTimeout(() => {
+    if (state.recommendBadgeGuideId === stableGuideId) {
+      dismissRecommendBadge(ui, stableGuideId);
+    }
+  }, RECOMMEND_BADGE_AUTO_HIDE_MS);
 }
 
 async function onShutter(videoEl) {
@@ -138,6 +220,8 @@ async function init() {
     onOpacityChange: setOpacity,
     onBurnInChange: setBurnIn,
     onShutter: () => onShutter(video),
+    onAutoRecommendChange: (value) => setAutoRecommend(value, ui),
+    onRecommendBadgeTap: () => switchToRecommendedGuide(ui),
   });
 
   video.addEventListener('click', (e) => handleOverlayTap(overlay, e.clientX, e.clientY));
@@ -174,6 +258,7 @@ async function init() {
           ? rawSubjects.map((s) => mapVideoToOverlay(s, video.videoWidth, video.videoHeight, overlayRect))
           : [];
       updateHitSpots();
+      updateAutoRecommend(ui);
     } catch (err) {
       console.warn('被写体検知に失敗しました', err);
     } finally {
@@ -212,4 +297,4 @@ if (typeof document !== 'undefined') {
   }
 }
 
-export { state, applyAspect, setGuide, cycleVariant, setAspect, setOpacity, init };
+export { state, applyAspect, setGuide, cycleVariant, setAspect, setOpacity, setAutoRecommend, init };

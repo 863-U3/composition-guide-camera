@@ -111,6 +111,17 @@ html, body {
   gap: 8px;
 }
 
+#recommendBadge {
+  background: rgba(255, 255, 255, 0.92);
+  color: #000;
+  border: none;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
 #shutterContainer {
   display: flex;
   justify-content: center;

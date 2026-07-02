@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert';
-import { scoreVariant, recommend } from '../src/recommender.js';
+import { scoreVariant, recommend, stableTop } from '../src/recommender.js';
 import { GUIDES } from '../src/guides/index.js';
 
 const at = (cx, cy, s = 0.1) => ({ cx, cy, w: s, h: s });
@@ -24,4 +24,9 @@ test('スポット完全一致はスコア1.0近く、遠距離は0近く', () =
 
 test('被写体ゼロなら全スコア0', () => {
   for (const r of recommend([], GUIDES)) assert.equal(r.score, 0);
+});
+
+test('直近3回中2回以上同じトップなら採用', () => {
+  assert.equal(stableTop(['thirds', 'thirds', 'golden']), 'thirds');
+  assert.equal(stableTop(['thirds', 'golden', 'silver']), null);
 });

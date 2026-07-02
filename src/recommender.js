@@ -14,6 +14,16 @@ export function scoreVariant(subjects, variant) {
   return total / subjects.length;
 }
 
+// 直近3回のトップguideId履歴から多数決で安定したトップを返す（チラつき防止）。
+export function stableTop(history) {
+  const last = history.slice(-3);
+  if (last.length < 3) return null;
+  const counts = {};
+  for (const id of last) counts[id] = (counts[id] ?? 0) + 1;
+  const [top, n] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  return n >= 2 ? top : null;
+}
+
 export function recommend(subjects, guides) {
   return guides
     .map(g => {
