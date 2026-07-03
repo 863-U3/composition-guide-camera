@@ -17,10 +17,10 @@ export const slant = {
   id: 'slant', name: '斜線', group: 'advanced',
   // 平行な斜線のリズム。対角線と違い「流れの反復」が主役
   variants: [
-    { id: 'down', lines: [[0, 0, 1, 1], [0, 1/3, 2/3, 1], [1/3, 0, 1, 2/3]], circles: [], spirals: [],
-      sweetSpots: [[1/3, 2/3, 0.08], [2/3, 1/3, 0.08]] },
     { id: 'up', lines: [[0, 1, 1, 0], [0, 2/3, 2/3, 0], [1/3, 1, 1, 1/3]], circles: [], spirals: [],
       sweetSpots: [[1/3, 1/3, 0.08], [2/3, 2/3, 0.08]] },
+    { id: 'down', lines: [[0, 0, 1, 1], [0, 1/3, 2/3, 1], [1/3, 0, 1, 2/3]], circles: [], spirals: [],
+      sweetSpots: [[1/3, 2/3, 0.08], [2/3, 1/3, 0.08]] },
   ],
 };
 
