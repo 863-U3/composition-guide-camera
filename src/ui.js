@@ -10,6 +10,22 @@ const ASPECTS = [
 const THUMB_W = 96;
 const THUMB_H = 72;
 
+const ZUKAN_DIAGRAM_W = 320;
+const ZUKAN_DIAGRAM_H = 240;
+
+// 初心者向けの一言コツ（構図図鑑用）
+const GUIDE_TIPS = {
+  thirds: '線の交点に主役を置くだけで様になる、いちばんの定番。',
+  triangle: '画面の中に三角形をつくると、どっしり安定した印象に。',
+  golden: '渦の中心に主役を。自然で心地よいバランスになる。',
+  silver: '和の建築や街並みと相性がいい、日本になじむ比率。',
+  'phi-grid': '三分割より少し中央寄り。上品な余白が生まれる。',
+  railman: '縦1/4の線に主役を乗せると、風景に奥行きが出る。',
+  diagonal: '斜めの流れをつくると、写真に動きとスピード感が出る。',
+  symmetry: '上下や左右で対称に。水鏡や建物で効果絶大。',
+  hinomaru: 'ど真ん中にドン。潔く主役を見せたいときに。',
+};
+
 /**
  * initUI wires up the bottom guide strip, aspect buttons, opacity slider,
  * and the camera-error overlay. All DOM lookups happen inside this function
@@ -151,6 +167,72 @@ export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacit
   if (settingsBtn && settingsPanel) {
     settingsBtn.addEventListener('click', () => {
       settingsPanel.classList.toggle('is-hidden');
+    });
+  }
+
+  // --- 構図図鑑 ---
+  const zukanBtn = document.getElementById('zukanBtn');
+  const zukanOverlay = document.getElementById('zukanOverlay');
+  const zukanCloseBtn = document.getElementById('zukanCloseBtn');
+  const zukanList = document.getElementById('zukanList');
+  if (zukanBtn && zukanOverlay && zukanList) {
+    let zukanBuilt = false;
+    const buildZukan = () => {
+      if (zukanBuilt) return;
+      zukanBuilt = true;
+      for (const guide of GUIDES) {
+        const entry = document.createElement('button');
+        entry.className = 'zukan-entry';
+        entry.setAttribute('aria-label', `${guide.name}で撮る`);
+
+        const title = document.createElement('h2');
+        title.className = 'zukan-entry-title';
+        title.textContent = guide.name;
+
+        const diagram = document.createElement('canvas');
+        diagram.className = 'zukan-diagram';
+        diagram.width = ZUKAN_DIAGRAM_W;
+        diagram.height = ZUKAN_DIAGRAM_H;
+        const dctx = diagram.getContext('2d');
+        dctx.fillStyle = '#111';
+        dctx.fillRect(0, 0, ZUKAN_DIAGRAM_W, ZUKAN_DIAGRAM_H);
+        drawGuide(dctx, guide.variants[0], ZUKAN_DIAGRAM_W, ZUKAN_DIAGRAM_H, { opacity: 1 });
+
+        const photo = document.createElement('img');
+        photo.className = 'zukan-photo';
+        photo.src = `assets/samples/${guide.id}.jpg`;
+        photo.alt = `${guide.name}の作例`;
+        photo.loading = 'lazy';
+
+        const tip = document.createElement('p');
+        tip.className = 'zukan-tip';
+        tip.textContent = GUIDE_TIPS[guide.id] ?? '';
+
+        entry.append(title, diagram, photo, tip);
+        entry.addEventListener('click', () => {
+          if (autoRecommendToggle?.checked) {
+            autoRecommendToggle.checked = false;
+            onAutoRecommendChange?.(false);
+          }
+          selectedGuideId = guide.id;
+          if (strip) {
+            for (const el of strip.querySelectorAll('.guide-thumb')) {
+              el.classList.toggle('is-selected', el.dataset.guideId === guide.id);
+            }
+          }
+          onGuideChange?.(guide.id);
+          zukanOverlay.classList.add('is-hidden');
+          showToastLocal(`${guide.name}で撮ってみよう`);
+        });
+        zukanList.appendChild(entry);
+      }
+    };
+    zukanBtn.addEventListener('click', () => {
+      buildZukan();
+      zukanOverlay.classList.remove('is-hidden');
+    });
+    zukanCloseBtn?.addEventListener('click', () => {
+      zukanOverlay.classList.add('is-hidden');
     });
   }
 

@@ -58,10 +58,19 @@
             </svg>
           </button>
         </div>
-        <div class="pill-btn-spacer"></div>
+        <button id="zukanBtn" type="button" class="pill-btn">構図って？</button>
       </div>
       <div id="guideStrip" class="is-hidden"></div>
     </footer>
+
+    <div id="zukanOverlay" class="is-hidden">
+      <header id="zukanHeader">
+        <h1>構図図鑑</h1>
+        <p>タップするとその構図で撮れるよ</p>
+        <button id="zukanCloseBtn" type="button" aria-label="閉じる">✕</button>
+      </header>
+      <div id="zukanList"></div>
+    </div>
 
     <div id="errorOverlay" class="is-hidden">
       <p>カメラにアクセスできません</p>

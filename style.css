@@ -117,10 +117,6 @@ html, body {
   padding: 0 16px;
 }
 
-.pill-btn-spacer {
-  width: 96px;
-}
-
 .aspect-btn {
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.3);
@@ -309,6 +305,103 @@ html, body {
   font-size: 14px;
   font-weight: bold;
   touch-action: manipulation;
+}
+
+/* --- 構図図鑑 --- */
+#zukanOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: #0a0a0a;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+#zukanHeader {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: rgba(10, 10, 10, 0.92);
+  backdrop-filter: blur(8px);
+  padding: calc(12px + env(safe-area-inset-top)) 20px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+#zukanHeader h1 {
+  margin: 0;
+  font-size: 18px;
+  color: #fff;
+}
+
+#zukanHeader p {
+  margin: 4px 0 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+#zukanCloseBtn {
+  position: absolute;
+  top: calc(10px + env(safe-area-inset-top));
+  right: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 16px;
+  touch-action: manipulation;
+}
+
+#zukanList {
+  display: grid;
+  gap: 28px;
+  padding: 20px;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.zukan-entry {
+  display: block;
+  width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.zukan-entry-title {
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+  border-left: 4px solid #ffd700;
+  padding-left: 10px;
+}
+
+.zukan-diagram {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  margin-bottom: 8px;
+}
+
+.zukan-photo {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
+}
+
+.zukan-tip {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .is-hidden {
