@@ -24,6 +24,13 @@ const GUIDE_TIPS = {
   diagonal: '斜めの流れをつくると、写真に動きとスピード感が出る。',
   symmetry: '上下や左右で対称に。水鏡や建物で効果絶大。',
   hinomaru: 'ど真ん中にドン。潔く主役を見せたいときに。',
+  horizon: '水平線は上か下の1/3に。真ん中に置かないのがコツ。',
+  slant: '斜めの平行線がリズムをつくる。坂道・畦道・手すりで。',
+  frame: '門や窓を額縁にして主役を囲むと、視線が集まる。',
+  tunnel: '奥の光に視線が吸い込まれる。並木道やトンネルで。',
+  radial: '一点から広がる線が奥行きと迫力を生む。光芒や参道で。',
+  curve: 'S字・C字の曲線で、写真に流れと奥行きが出る。川や道で。',
+  pattern: '同じものの繰り返しはリズム。あえて一つ崩すのも技。',
 };
 
 /**
@@ -198,17 +205,27 @@ export function initUI({ onGuideChange, onVariantCycle, onAspectChange, onOpacit
         dctx.fillRect(0, 0, ZUKAN_DIAGRAM_W, ZUKAN_DIAGRAM_H);
         drawGuide(dctx, guide.variants[0], ZUKAN_DIAGRAM_W, ZUKAN_DIAGRAM_H, { opacity: 1 });
 
+        const photoWrap = document.createElement('div');
+        photoWrap.className = 'zukan-photo-wrap';
         const photo = document.createElement('img');
         photo.className = 'zukan-photo';
         photo.src = `assets/samples/${guide.id}.jpg`;
         photo.alt = `${guide.name}の作例`;
         photo.loading = 'lazy';
+        // 作例の上にガイド線を重ねる（写真は4:3固定）
+        const photoOverlay = document.createElement('canvas');
+        photoOverlay.className = 'zukan-photo-overlay';
+        photoOverlay.width = 400;
+        photoOverlay.height = 300;
+        const octx = photoOverlay.getContext('2d');
+        drawGuide(octx, guide.variants[0], 400, 300, { opacity: 0.9, color: '#ff5252' });
+        photoWrap.append(photo, photoOverlay);
 
         const tip = document.createElement('p');
         tip.className = 'zukan-tip';
         tip.textContent = GUIDE_TIPS[guide.id] ?? '';
 
-        entry.append(title, diagram, photo, tip);
+        entry.append(title, diagram, photoWrap, tip);
         entry.addEventListener('click', () => {
           if (autoRecommendToggle?.checked) {
             autoRecommendToggle.checked = false;

@@ -10,6 +10,12 @@ export function drawGuide(ctx, variant, w, h, opts = {}) {
   for (const [cx, cy, r] of variant.circles) {
     ctx.beginPath(); ctx.arc(cx * w, cy * h, r * Math.min(w, h), 0, Math.PI * 2); ctx.stroke();
   }
+  // arcs = [cx, cy, r, 開始角deg, 終了角deg]（S字・C字などの部分円弧）
+  for (const [cx, cy, r, a1, a2] of variant.arcs ?? []) {
+    ctx.beginPath();
+    ctx.arc(cx * w, cy * h, r * Math.min(w, h), (a1 * Math.PI) / 180, (a2 * Math.PI) / 180);
+    ctx.stroke();
+  }
   for (const sp of variant.spirals ?? []) drawSpiral(ctx, sp, w, h);
   // スイートスポット: 破線円。highlightに入っていれば発光（太line＋glow色）
   variant.sweetSpots.forEach(([cx, cy, r], i) => {

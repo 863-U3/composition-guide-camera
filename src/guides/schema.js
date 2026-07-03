@@ -11,6 +11,12 @@ export function validateGuide(g) {
         if (item.some(n => typeof n !== 'number' || n < -0.5 || n > 1.5)) errors.push(`${v.id}.${k}: 正規化座標外`);
       }
     }
+    // arcs = [cx, cy, r, 開始角deg, 終了角deg]（角度は度数なので範囲チェックは座標3要素のみ）
+    for (const item of v.arcs ?? []) {
+      if (item.length !== 5) errors.push(`${v.id}.arcs: 要素数5であるべき`);
+      if (item.slice(0, 3).some(n => typeof n !== 'number' || n < -0.5 || n > 1.5)) errors.push(`${v.id}.arcs: 正規化座標外`);
+      if (item.slice(3).some(n => typeof n !== 'number')) errors.push(`${v.id}.arcs: 角度が数値でない`);
+    }
   }
   return { ok: errors.length === 0, errors };
 }
