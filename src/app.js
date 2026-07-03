@@ -147,7 +147,7 @@ function updateAutoRecommend(ui) {
   switchToGuide(ui, stableGuideId, stableEntry.variantId);
 }
 
-async function onShutter(videoEl, overlay) {
+async function onShutter(videoEl, overlay, ui) {
   try {
     let crop;
     if (videoEl.videoWidth && videoEl.videoHeight && overlay) {
@@ -170,11 +170,14 @@ async function onShutter(videoEl, overlay) {
     });
     if (!blob) {
       console.warn('撮影に失敗しました');
+      ui?.showToast?.('撮影に失敗しました');
       return;
     }
     download(blob);
+    ui?.showToast?.('保存しました');
   } catch (err) {
     console.warn('撮影に失敗しました', err);
+    ui?.showToast?.('撮影に失敗しました');
   }
 }
 
@@ -220,7 +223,7 @@ async function init() {
     onAspectChange: (aspect) => setAspect(video, overlay, aspect),
     onOpacityChange: setOpacity,
     onBurnInChange: setBurnIn,
-    onShutter: () => onShutter(video, overlay),
+    onShutter: () => onShutter(video, overlay, ui),
     onAutoRecommendChange: (value) => setAutoRecommend(value, ui),
     onLevelToggle: setLevelEnabled,
   });
@@ -228,15 +231,54 @@ async function init() {
   video.addEventListener('click', (e) => handleOverlayTap(overlay, e.clientX, e.clientY));
   video.addEventListener('dblclick', () => clearManualSubject());
 
+  let cameraStream = null;
+  let cameraStarting = false;
+
   async function tryStartCamera() {
+    if (cameraStarting) return;
+    cameraStarting = true;
     try {
-      await startCamera(video, { facing: 'environment' });
+      if (cameraStream) {
+        for (const t of cameraStream.getTracks()) t.stop();
+        cameraStream = null;
+      }
+      cameraStream = await startCamera(video, { facing: 'environment' });
+      // iOSはバックグラウンド・ロック・他アプリのカメラ使用でトラックを殺す
+      for (const t of cameraStream.getVideoTracks()) {
+        t.addEventListener('ended', () => {
+          if (document.visibilityState === 'visible') tryStartCamera();
+        });
+      }
       ui.hideError();
       applyAspect(video, overlay, state.aspect);
     } catch (err) {
       ui.showError(tryStartCamera);
+    } finally {
+      cameraStarting = false;
     }
   }
+
+  function resumeCamera() {
+    const track = cameraStream?.getVideoTracks()[0];
+    if (!track || track.readyState === 'ended') {
+      tryStartCamera();
+      return;
+    }
+    // 生きているように見えても復帰直後は映像が止まっていることがある。
+    // play()を蹴り直し、1秒待ってもmutedのままなら取得し直す。
+    video.play().catch(() => {});
+    setTimeout(() => {
+      const t = cameraStream?.getVideoTracks()[0];
+      if (!t || t.readyState === 'ended' || t.muted) tryStartCamera();
+    }, 1000);
+  }
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') resumeCamera();
+  });
+  window.addEventListener('pageshow', (e) => {
+    if (e.persisted) resumeCamera();
+  });
 
   window.addEventListener('resize', () => applyAspect(video, overlay, state.aspect));
 

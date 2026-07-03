@@ -20,8 +20,11 @@ export async function capture(videoEl, { burnIn = false, variant, opacity = 0.8,
 export { visibleVideoRect };
 
 export function download(blob, name = `photo-${Date.now()}.jpg`) {
-  const a = Object.assign(document.createElement('a'), {
-    href: URL.createObjectURL(blob), download: name,
-  });
-  a.click(); URL.revokeObjectURL(a.href);
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href: url, download: name });
+  // iOS SafariはDOM外アンカーのclick()や、click直後のrevokeで保存が中断される
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
